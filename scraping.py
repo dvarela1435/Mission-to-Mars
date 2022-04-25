@@ -12,6 +12,7 @@ def scrape_all():
     browser = Browser('chrome', **executable_path, headless=True)
 
     news_title, news_paragraph = mars_news(browser)
+    
 
     # Run all scraping functions and store results in a dictionary
     data = {
@@ -19,6 +20,7 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "hemispheres": hemispheres(browser),
         "last_modified": dt.datetime.now()
     }
 
@@ -97,6 +99,45 @@ def mars_facts():
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
 
+def hemispheres(browser):
+    # 1. Use browser to visit the URL 
+    url = 'https://marshemispheres.com/'
+    browser.visit(url)
+
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+
+    # 3. Write code to retrieve the image urls and titles for each hemisphere.
+    html = browser.html
+    sphere_soup = soup(html, 'html.parser')
+
+    for sphere in range(4):
+        browser.links.find_by_partial_text('Enhanced')[sphere].click()
+        
+        # Parse the resulting html with soup
+        html = browser.html
+        url_soup = soup(html, 'html.parser')
+        
+        #find title
+        title = url_soup.find('h2',class_='title').text
+        
+        #find image
+        
+        img = url_soup.find('img',class_='wide-image').get('src')
+        url_start = "https://astrogeology.usgs.gov/cache/"
+        img_link = url_start + img
+        
+        #create a dictionary
+        hemisphere= {}
+        hemisphere['img_url'] = img_link
+        hemisphere['title'] = title
+        hemisphere_image_urls.append(hemisphere)
+        
+        #go back a page
+        browser.back()
+        
+    return hemisphere_image_urls
+    
 if __name__ == "__main__":
 
     # If running as script, print scraped data
